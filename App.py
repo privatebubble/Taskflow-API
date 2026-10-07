@@ -11,6 +11,14 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_connection():
     return psycopg2.connect(DATABASE_URL)
 
+@app.route("/health")
+def health():
+    try:
+        conn = get_connection()
+        conn.close()
+        return jsonify({"status": "healthy"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "detail": str(e)}), 500
 
 @app.route("/")
 def home():

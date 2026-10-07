@@ -2,3 +2,4 @@ Dependencies
 	flask
 	psycopg2-binary
 	python-dotenv
+	pytest
