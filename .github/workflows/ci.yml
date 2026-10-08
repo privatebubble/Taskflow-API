@@ -6,6 +6,7 @@ on:
   pull_request:
 
 jobs:
+  # CI job to run tests
   test:
     runs-on: ubuntu-latest
     steps:
@@ -22,3 +23,30 @@ jobs:
         run: python -m pytest
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL}}
+
+  # CD job to deploy the application
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Set up Authentication for Docker
+      - name: Log in to Github Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN}}
+
+      # Build and push Docker image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/taskflow-api:latest
