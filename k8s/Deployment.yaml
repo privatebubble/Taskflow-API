@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskflow-api
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: taskflow-api
+  # Blueprint for the pods that will be created
+  template:
+    metadata:
+      labels:
+        app: taskflow-api
+    spec:
+      containers:
+      - name: taskflow-api
+        image: ghcr.io/privatebubble/taskflow-api:latest
+        ports:
+        - containerPort: 5000
+        
+        # Load environment variables from the secret
+        envFrom:
+          - secretRef:
+              name: taskflow-secrets
+        
+        # Kubernetes calls the /health endpoint to check if the container is ready to serve traffic and if it is still alive
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+
+        # Kubernetes calls the /health endpoint to check whether the container is stuck. If it keeps failing, Kubernetes will retart the container.
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+
+
